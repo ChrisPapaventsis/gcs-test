@@ -12,7 +12,7 @@ except Exception as e:
 
 # --- Configuration from Environment Variables ---
 # This should be set in your Cloud Run service configuration
-OUTPUT_GCS_BUCKET_NAME = os.environ.get('OUTPUT_GCS_BUCKET_NAME')
+OUTPUT_GCS_BUCKET_NAME = os.environ.get('article-sound-files')
 
 @functions_framework.cloud_event
 def copy_txt_file_gcs(cloud_event: CloudEvent):
