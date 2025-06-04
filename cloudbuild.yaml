@@ -1,0 +1,24 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "gcr.io/${_PROJECT_ID}/${_SERVICE_NAME}:${_TAG_NAME}"
+      - "."
+    id: "Build Docker image"
+
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/${_PROJECT_ID}/${_SERVICE_NAME}:${_TAG_NAME}"]
+    id: "Push Docker image"
+
+images:
+  - "gcr.io/${_PROJECT_ID}/${_SERVICE_NAME}:${_TAG_NAME}"
+
+# Default substitutions (can be overridden at build time)
+substitutions:
+  _SERVICE_NAME: "gcs-txt-copier" # Choose a name for your service/image
+  _TAG_NAME: "latest"
+  _PROJECT_ID: "${PROJECT_ID}" # PROJECT_ID is a default substitution provided by Cloud Build
+
+options:
+  logging: CLOUD_LOGGING_ONLY
