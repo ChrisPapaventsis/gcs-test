@@ -46,6 +46,6 @@ RUN python preload_models.py
 COPY main.py .
 
 # Set the entrypoint for Functions Framework
-# The FUNCTION_TARGET environment variable will be set by Cloud Run to copy_txt_file_gcs
+# The FUNCTION_TARGET environment variable will be set by Cloud Run to melo_tts_gcs_trigger
 # Default port for Cloud Run is 8080
-CMD exec functions-framework --target=copy_txt_file_gcs --port=8080
+CMD exec functions-framework --target=melo_tts_gcs_trigger --port=8080
