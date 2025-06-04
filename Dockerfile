@@ -29,6 +29,7 @@ RUN git clone https://github.com/myshell-ai/MeloTTS.git \
     && cd MeloTTS \
     && pip install --no-cache-dir -e . \
     && python -m unidic download \
+    && python -m nltk.downloader averaged_perceptron_tagger punkt \
     && cd ..
 # && rm -rf MeloTTS
 
