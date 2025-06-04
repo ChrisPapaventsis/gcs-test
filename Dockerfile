@@ -29,8 +29,8 @@ RUN git clone https://github.com/myshell-ai/MeloTTS.git \
     && cd MeloTTS \
     && pip install --no-cache-dir -e . \
     && python -m unidic download \
-    && cd .. \
-    && rm -rf MeloTTS
+    && cd ..
+# && rm -rf MeloTTS
 
 # Copy the main application code (main.py)
 COPY main.py .
