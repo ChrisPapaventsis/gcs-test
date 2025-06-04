@@ -32,6 +32,16 @@ RUN git clone https://github.com/myshell-ai/MeloTTS.git \
     && cd ..
 # && rm -rf MeloTTS
 
+# Copy the model preloading script
+COPY preload_models.py .
+
+# Run the model preloading script
+# Adjust the default list of languages as needed
+ARG SUPPORTED_LANGUAGES_BUILD="EN,ES,FR,JP,ZH,KR" 
+ENV SUPPORTED_LANGUAGES_BUILD=${SUPPORTED_LANGUAGES_BUILD}
+ENV PRELOAD_DEVICE="cpu"
+RUN python preload_models.py
+
 # Copy the main application code (main.py)
 COPY main.py .
 
