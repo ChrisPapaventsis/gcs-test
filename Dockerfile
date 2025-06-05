@@ -52,10 +52,14 @@ RUN mkdir -p $NLTK_DATA
 RUN echo "Downloading NLTK packages to $NLTK_DATA..."
 RUN python -m nltk.downloader -d $NLTK_DATA averaged_perceptron_tagger punkt
 
-# Debugging lines
-RUN echo "Listing contents of $NLTK_DATA:" && ls -l $NLTK_DATA
-RUN echo "Listing contents of $NLTK_DATA/taggers:" && ls -l $NLTK_DATA/taggers
-RUN echo "Detailed listing of $NLTK_DATA/taggers/averaged_perceptron_tagger (if it exists):" && ls -lR $NLTK_DATA/taggers/averaged_perceptron_tagger
+# Create a symbolic link
+RUN if [ -d "$NLTK_DATA/taggers/averaged_perceptron_tagger" ]; then \
+    ln -s "$NLTK_DATA/taggers/averaged_perceptron_tagger" "$NLTK_DATA/taggers/averaged_perceptron_tagger_eng"; \
+    echo "Created symlink: $NLTK_DATA/taggers/averaged_perceptron_tagger_eng -> $NLTK_DATA/taggers/averaged_perceptron_tagger"; \
+    else \
+    echo "Error: $NLTK_DATA/taggers/averaged_perceptron_tagger directory not found, cannot create symlink."; \
+    exit 1; \
+    fi
 
 # Copy the model preloading script
 COPY preload_models.py .
