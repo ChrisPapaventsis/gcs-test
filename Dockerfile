@@ -52,14 +52,19 @@ RUN mkdir -p $NLTK_DATA
 RUN echo "Downloading NLTK packages to $NLTK_DATA..."
 RUN python -m nltk.downloader -d $NLTK_DATA averaged_perceptron_tagger punkt
 
+# --- Test the specific download you found online ---
+RUN echo "Attempting to download 'averaged_perceptron_tagger_eng' as suggested..."
+RUN python -c "import nltk; nltk.download('averaged_perceptron_tagger_eng', download_dir='$NLTK_DATA')"
+# --- End of test ---
+
 # Create a symbolic link
-RUN if [ -d "$NLTK_DATA/taggers/averaged_perceptron_tagger" ]; then \
-    ln -s "$NLTK_DATA/taggers/averaged_perceptron_tagger" "$NLTK_DATA/taggers/averaged_perceptron_tagger_eng"; \
-    echo "Created symlink: $NLTK_DATA/taggers/averaged_perceptron_tagger_eng -> $NLTK_DATA/taggers/averaged_perceptron_tagger"; \
-    else \
-    echo "Error: $NLTK_DATA/taggers/averaged_perceptron_tagger directory not found, cannot create symlink."; \
-    exit 1; \
-    fi
+# RUN if [ -d "$NLTK_DATA/taggers/averaged_perceptron_tagger" ]; then \
+#     ln -s "$NLTK_DATA/taggers/averaged_perceptron_tagger" "$NLTK_DATA/taggers/averaged_perceptron_tagger_eng"; \
+#     echo "Created symlink: $NLTK_DATA/taggers/averaged_perceptron_tagger_eng -> $NLTK_DATA/taggers/averaged_perceptron_tagger"; \
+#     else \
+#     echo "Error: $NLTK_DATA/taggers/averaged_perceptron_tagger directory not found, cannot create symlink."; \
+#     exit 1; \
+#     fi
 
 # Copy the model preloading script
 COPY preload_models.py .
