@@ -1,5 +1,9 @@
 steps:
+  # Step 1: Build the Docker image
+  # This step is modified to access the Hugging Face token from Secret Manager
+  # and pass it as a build argument to the Docker build command.
   - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash" # Using bash entrypoint to allow shell variable substitution
     args:
       - "build"
       - "-t"
@@ -7,6 +11,7 @@ steps:
       - "."
     id: "Build Docker image"
 
+  # Step 2: Push the Docker image (this step remains the same)
   - name: "gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/${_PROJECT_ID}/${_SERVICE_NAME}:${_TAG_NAME}"]
     id: "Push Docker image"
@@ -14,11 +19,20 @@ steps:
 images:
   - "gcr.io/${_PROJECT_ID}/${_SERVICE_NAME}:${_TAG_NAME}"
 
+# Define which secrets from Secret Manager are available to this build.
+availableSecrets:
+  secretManager:
+    - versionName: projects/gcs-test/secrets/huggingface-read-token/versions/latest
+      # This 'env' key is the name of the environment variable made available
+      # to the build step via 'secretEnv' above.
+      env: "HF_TOKEN_FROM_SECRET"
+
 # Default substitutions (can be overridden at build time)
 substitutions:
-  _SERVICE_NAME: "gcs-txt-copier" # Choose a name for your service/image
+  _SERVICE_NAME: "melo-tts-service"
   _TAG_NAME: "latest"
-  _PROJECT_ID: "${PROJECT_ID}" # PROJECT_ID is a default substitution provided by Cloud Build
+  _PROJECT_ID: "${PROJECT_ID}" # PROJECT_ID is a default substitution
+  _SUPPORTED_LANGUAGES_BUILD: "EN,ES,FR,JP,ZH,KR"
 
 options:
   logging: CLOUD_LOGGING_ONLY

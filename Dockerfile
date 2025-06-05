@@ -9,6 +9,11 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # Set Python to run in unbuffered mode, which is recommended for Docker logs
 ENV PYTHONUNBUFFERED 1
 
+# Accept the Hugging Face token as a build argument
+ARG HF_TOKEN_ARG
+# Set it as an environment variable that Hugging Face libraries will use
+ENV HF_TOKEN=${HF_TOKEN_ARG}
+
 # Install system dependencies: git for cloning, build-essential for some Python packages, libsndfile1 for audio
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
@@ -22,6 +27,11 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Install huggingface_hub to ensure CLI tools are available if needed,
+# and for libraries to robustly pick up the token.
+# Usually a dependency of transformers, but doesn't hurt to ensure.
+RUN pip install huggingface_hub
 
 # Clone MeloTTS repository and install it along with its dependencies
 # This will use the requirements.txt and setup.py from the MeloTTS repo
