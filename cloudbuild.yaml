@@ -5,11 +5,18 @@ steps:
   - name: "gcr.io/cloud-builders/docker"
     entrypoint: "bash" # Using bash entrypoint to allow shell variable substitution
     args:
-      - "build"
-      - "-t"
-      - "gcr.io/${_PROJECT_ID}/${_SERVICE_NAME}:${_TAG_NAME}"
-      - "."
-    id: "Build Docker image"
+      - "-c"
+      - |
+        # $$HF_TOKEN_FROM_SECRET will be replaced by Cloud Build with the actual secret value.
+        # We pass it to 'docker build' as a build argument named 'HF_TOKEN_ARG'.
+        docker build \
+          --build-arg HF_TOKEN_ARG=$$HF_TOKEN_FROM_SECRET \
+          -t "gcr.io/${_PROJECT_ID}/${_SERVICE_NAME}:${_TAG_NAME}" \
+          .
+    # This makes the secret available as an environment variable (HF_TOKEN_FROM_SECRET)
+    # specifically within this build step's execution environment.
+    secretEnv: ["HF_TOKEN_FROM_SECRET"]
+    id: "Build Docker image with HF Token"
 
   # Step 2: Push the Docker image (this step remains the same)
   - name: "gcr.io/cloud-builders/docker"
