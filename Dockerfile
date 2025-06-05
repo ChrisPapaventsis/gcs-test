@@ -49,7 +49,13 @@ RUN git clone https://github.com/myshell-ai/MeloTTS.git \
 # Download necessary NLTK data packages to the defined NLTK_DATA path
 # Create the directory first to ensure it exists
 RUN mkdir -p $NLTK_DATA
+RUN echo "Downloading NLTK packages to $NLTK_DATA..."
 RUN python -m nltk.downloader -d $NLTK_DATA averaged_perceptron_tagger punkt
+
+# Debugging lines
+RUN echo "Listing contents of $NLTK_DATA:" && ls -l $NLTK_DATA
+RUN echo "Listing contents of $NLTK_DATA/taggers:" && ls -l $NLTK_DATA/taggers
+RUN echo "Detailed listing of $NLTK_DATA/taggers/averaged_perceptron_tagger (if it exists):" && ls -lR $NLTK_DATA/taggers/averaged_perceptron_tagger
 
 # Copy the model preloading script
 COPY preload_models.py .
