@@ -39,7 +39,7 @@ substitutions:
   _SERVICE_NAME: "melo-tts-service"
   _TAG_NAME: "latest"
   _PROJECT_ID: "${PROJECT_ID}" # PROJECT_ID is a default substitution
-  _SUPPORTED_LANGUAGES_BUILD: "EN,ES,FR,JP,ZH,KR"
+  _SUPPORTED_LANGUAGES_BUILD: "EN"
 
 options:
   logging: CLOUD_LOGGING_ONLY

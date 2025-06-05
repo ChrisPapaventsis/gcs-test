@@ -5,7 +5,7 @@ from melo.api import TTS
 def run_preloading():
     # Ensure 'JP' is included if japanese.py is trying to load models
     # Add all languages you intend to support or that cause import-time downloads
-    languages_to_preload = os.environ.get('SUPPORTED_LANGUAGES_BUILD', 'EN,ES,FR,JP,ZH,KR').upper().split(',')
+    languages_to_preload = os.environ.get('SUPPORTED_LANGUAGES_BUILD', 'EN').upper().split(',')
     device = os.environ.get('PRELOAD_DEVICE', 'cpu') 
 
     print(f"Starting TTS model preloading for languages: {languages_to_preload} on device: {device}")

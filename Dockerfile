@@ -14,6 +14,9 @@ ARG HF_TOKEN_ARG
 # Set it as an environment variable that Hugging Face libraries will use
 ENV HF_TOKEN=${HF_TOKEN_ARG}
 
+# Define the NLTK data path and ensure NLTK uses it
+ENV NLTK_DATA /app/nltk_data
+
 # Install system dependencies: git for cloning, build-essential for some Python packages, libsndfile1 for audio
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
@@ -43,12 +46,17 @@ RUN git clone https://github.com/myshell-ai/MeloTTS.git \
     && cd ..
 # && rm -rf MeloTTS
 
+# Download necessary NLTK data packages to the defined NLTK_DATA path
+# Create the directory first to ensure it exists
+RUN mkdir -p $NLTK_DATA
+RUN python -m nltk.downloader -d $NLTK_DATA averaged_perceptron_tagger punkt
+
 # Copy the model preloading script
 COPY preload_models.py .
 
 # Run the model preloading script
 # Adjust the default list of languages as needed
-ARG SUPPORTED_LANGUAGES_BUILD="EN,ES,FR,JP,ZH,KR" 
+ARG SUPPORTED_LANGUAGES_BUILD="EN" 
 ENV SUPPORTED_LANGUAGES_BUILD=${SUPPORTED_LANGUAGES_BUILD}
 ENV PRELOAD_DEVICE="cpu"
 RUN python preload_models.py
