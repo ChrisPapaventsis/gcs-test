@@ -1,80 +1,83 @@
-# Use an official Python runtime as a parent image
+# Use Python 3.9 runtime as requested
 FROM python:3.9-slim
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Set environment variables for Python to prevent it from writing .pyc files
 ENV PYTHONDONTWRITEBYTECODE 1
-# Set Python to run in unbuffered mode, which is recommended for Docker logs
 ENV PYTHONUNBUFFERED 1
 
-# Accept the Hugging Face token as a build argument
+# Accept and set Hugging Face token
 ARG HF_TOKEN_ARG
-# Set it as an environment variable that Hugging Face libraries will use
 ENV HF_TOKEN=${HF_TOKEN_ARG}
 
-# Define the NLTK data path and ensure NLTK uses it
+# Define and create the NLTK data path
 ENV NLTK_DATA /app/nltk_data
+RUN mkdir -p $NLTK_DATA
 
-# Install system dependencies: git for cloning, build-essential for some Python packages, libsndfile1 for audio
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     build-essential \
     libsndfile1 \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the requirements file into the container
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install dependencies from requirements.txt
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Install huggingface_hub to ensure CLI tools are available if needed,
-# and for libraries to robustly pick up the token.
-# Usually a dependency of transformers, but doesn't hurt to ensure.
 RUN pip install huggingface_hub
 
-# Clone MeloTTS repository and install it along with its dependencies
-# This will use the requirements.txt and setup.py from the MeloTTS repo
+# --- NLTK Version and Data Fixes ---
+
+# 1. Explicitly install a recent, specific NLTK version for consistency
+RUN echo "--- [FIX] Installing specific NLTK version ---"
+RUN pip install --upgrade nltk==3.8.1
+
+# 2. Clone and install MeloTTS
 RUN git clone https://github.com/myshell-ai/MeloTTS.git \
     && cd MeloTTS \
-    && pip install --no-cache-dir -e . \
+    && pip install --no-cache-dir . \
     && python -m unidic download \
-    && python -m nltk.downloader averaged_perceptron_tagger punkt \
-    && cd ..
-# && rm -rf MeloTTS
+    && cd .. \
+    && rm -rf MeloTTS
 
-# Download necessary NLTK data packages to the defined NLTK_DATA path
-# Create the directory first to ensure it exists
-RUN mkdir -p $NLTK_DATA
-RUN echo "Downloading NLTK packages to $NLTK_DATA..."
+# 3. Download the NLTK data using the now-installed NLTK
+RUN echo "--- [FIX] Downloading NLTK data ---"
 RUN python -m nltk.downloader -d $NLTK_DATA averaged_perceptron_tagger punkt
 
-# Create a symbolic link
-RUN if [ -d "$NLTK_DATA/taggers/averaged_perceptron_tagger" ]; then \
+# 4. Debug: List the contents of the unzipped directory to verify
+RUN echo "--- [DEBUG] Listing contents of unzipped tagger directory ---"
+RUN ls -lR $NLTK_DATA/taggers/averaged_perceptron_tagger || echo "WARNING: Tagger directory not found."
+
+# 5. Create symlinks for the directory AND then for the files if they exist
+RUN echo "--- [FIX] Creating NLTK directory and file symlinks ---" && \
+    # Create directory symlink (averaged_perceptron_tagger_eng -> averaged_perceptron_tagger)
+    if [ -d "$NLTK_DATA/taggers/averaged_perceptron_tagger" ] && [ ! -e "$NLTK_DATA/taggers/averaged_perceptron_tagger_eng" ]; then \
     ln -s "$NLTK_DATA/taggers/averaged_perceptron_tagger" "$NLTK_DATA/taggers/averaged_perceptron_tagger_eng"; \
-    echo "Created symlink: $NLTK_DATA/taggers/averaged_perceptron_tagger_eng -> $NLTK_DATA/taggers/averaged_perceptron_tagger"; \
+    echo "Created directory symlink for averaged_perceptron_tagger_eng."; \
+    fi && \
+    # Now, inside the symlinked directory, create file symlinks if the base JSON files exist
+    if [ -d "$NLTK_DATA/taggers/averaged_perceptron_tagger_eng" ]; then \
+    cd "$NLTK_DATA/taggers/averaged_perceptron_tagger_eng" && \
+    if [ -f "averaged_perceptron_tagger.weights.json" ]; then \
+    ln -s "averaged_perceptron_tagger.weights.json" "averaged_perceptron_tagger_eng.weights.json"; \
+    ln -s "averaged_perceptron_tagger.tagdict.json" "averaged_perceptron_tagger_eng.tagdict.json"; \
+    ln -s "averaged_perceptron_tagger.classes.json" "averaged_perceptron_tagger_eng.classes.json"; \
+    echo "Created file symlinks for JSON files."; \
     else \
-    echo "Error: $NLTK_DATA/taggers/averaged_perceptron_tagger directory not found, cannot create symlink."; \
-    exit 1; \
+    echo "WARNING: Base JSON files (e.g., averaged_perceptron_tagger.weights.json) not found. File symlinks not created."; \
+    fi; \
     fi
 
-# Copy the model preloading script
-COPY preload_models.py .
+# --- End of NLTK fixes ---
 
-# Run the model preloading script
-# Adjust the default list of languages as needed
-ARG SUPPORTED_LANGUAGES_BUILD="EN" 
+# ... (rest of your Dockerfile: preload_models.py, COPY main.py, CMD) ...
+COPY preload_models.py .
+ARG SUPPORTED_LANGUAGES_BUILD="EN"
 ENV SUPPORTED_LANGUAGES_BUILD=${SUPPORTED_LANGUAGES_BUILD}
 ENV PRELOAD_DEVICE="cpu"
 RUN python preload_models.py
-
-# Copy the main application code (main.py)
 COPY main.py .
-
-# Set the entrypoint for Functions Framework
-# The FUNCTION_TARGET environment variable will be set by Cloud Run to melo_tts_gcs_trigger
-# Default port for Cloud Run is 8080
 CMD exec functions-framework --target=melo_tts_gcs_trigger --port=8080
