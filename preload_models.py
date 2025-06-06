@@ -2,11 +2,13 @@
 import os
 from melo.api import TTS
 
-# --- Add this import ---
+# Add this import for downloading Hugging Face transformers
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 def preload_tts_models():
-    # This part remains the same, preloading the main TTS synthesizer models
+    """
+    This function preloads the main MeloTTS synthesizer models.
+    """
     languages_to_preload = os.environ.get('SUPPORTED_LANGUAGES_BUILD', 'EN').upper().split(',')
     device = os.environ.get('PRELOAD_DEVICE', 'cpu') 
 
@@ -21,15 +23,18 @@ def preload_tts_models():
             print(f"Successfully preloaded TTS model for language: {lang_code}")
         except Exception as e:
             print(f"ERROR: Could not preload TTS model for language {lang_code}: {e}")
-            # Optional: Uncomment the next line to make the build fail if a model is critical
-            # raise
+            # To ensure a stable build, you might want to fail if a critical model can't be downloaded
+            # raise e
     print(f"--- [END] Preloading Main TTS Models ---")
 
 
 def preload_hf_bert_models():
-    # This new function preloads the supplementary BERT models used for text processing
-    # The 'bert-base-uncased' model is used for English text feature extraction.
-    # The 'tohoku-nlp/bert-base-japanese-v3' was from a previous error log for Japanese.
+    """
+    This new function preloads the supplementary BERT models used for text processing.
+    """
+    # Add all BERT models MeloTTS might use here.
+    # 'bert-base-uncased' is for English.
+    # 'tohoku-nlp/bert-base-japanese-v3' was from a previous NLTK-related error for Japanese.
     models_to_preload = [
         "bert-base-uncased",
         "tohoku-nlp/bert-base-japanese-v3" 
@@ -45,13 +50,12 @@ def preload_hf_bert_models():
             print(f"Successfully preloaded {model_id}.")
         except Exception as e:
             print(f"ERROR: Could not preload Hugging Face model {model_id}. Error: {e}")
-            # Optional: Uncomment the next line to make the build fail if a model is critical
-            # raise
+            # To ensure a stable build, you might want to fail if a model is critical
+            # raise e
     print(f"--- [END] Preloading Hugging Face BERT models ---")
 
 
 if __name__ == "__main__":
-    # First, preload the main synthesizer models
+    # Execute both preloading functions
     preload_tts_models()
-    # Second, preload the supplementary BERT models
     preload_hf_bert_models()
