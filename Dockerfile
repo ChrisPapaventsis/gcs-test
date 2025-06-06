@@ -1,10 +1,10 @@
-# Use Python 3.9 as the base image, aligning with MeloTTS's development environment
+# Use Python 3.9 as the base image
 FROM python:3.9-slim
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Set standard environment variables for Python
+# Set standard environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
@@ -12,7 +12,7 @@ ENV PYTHONUNBUFFERED 1
 ARG HF_TOKEN_ARG
 ENV HF_TOKEN=${HF_TOKEN_ARG}
 
-# IMPORTANT: Define the NLTK data path. NLTK will use this path for downloading and runtime lookups.
+# Define the NLTK data path and ensure NLTK uses it
 ENV NLTK_DATA /app/nltk_data
 
 # Install necessary system dependencies
@@ -35,27 +35,13 @@ RUN git clone https://github.com/myshell-ai/MeloTTS.git \
     && cd .. \
     && rm -rf MeloTTS
 
-# --- NLTK Data Download (Implementing Your Solution) ---
-
+# --- NLTK Data Download ---
 # Create the target directory for NLTK data
 RUN mkdir -p $NLTK_DATA
+# Download the specific, correct packages for the English tagger and tokenizer
+RUN python -c "import nltk; nltk.download(['averaged_perceptron_tagger_eng', 'punkt'], download_dir='$NLTK_DATA')"
 
-# Use python -c to run your specific download command.
-# The `download_dir='$NLTK_DATA'` argument ensures it's saved to our specified location.
-RUN echo "--- [TEST] Attempting to download 'averaged_perceptron_tagger_eng' ---"
-RUN python -c "import nltk; nltk.download('averaged_perceptron_tagger_eng', download_dir='$NLTK_DATA')"
-
-# Also download 'punkt', as it's a very common dependency for tagging tasks.
-RUN echo "--- [INFO] Downloading 'punkt' tokenizer ---"
-RUN python -c "import nltk; nltk.download('punkt', download_dir='$NLTK_DATA')"
-
-# Optional Debugging: Add this line if you want to see the contents of the nltk_data directory in your build logs
-RUN echo "--- [DEBUG] Final contents of NLTK data directory ---" && ls -lR $NLTK_DATA
-
-# --- End of NLTK Data Download section ---
-
-
-# Copy and run the model preloading script
+# Copy the model preloading script
 COPY preload_models.py .
 ARG SUPPORTED_LANGUAGES_BUILD="EN"
 ENV SUPPORTED_LANGUAGES_BUILD=${SUPPORTED_LANGUAGES_BUILD}

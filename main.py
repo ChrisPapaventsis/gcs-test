@@ -8,6 +8,19 @@ from cloudevents.http import CloudEvent # For type hinting
 # Import GCS client library
 from google.cloud import storage
 
+# --- [NNPACK FIX] Add these lines to disable NNPACK ---
+import torch
+if hasattr(torch, 'backends') and hasattr(torch.backends, 'nnpack') and hasattr(torch.backends.nnpack, 'enabled'):
+    print("Attempting to disable NNPACK...")
+    try:
+        torch.backends.nnpack.enabled = False
+        print("NNPACK disabled.")
+    except Exception as e:
+        print(f"Could not disable NNPACK: {e}")
+else:
+    print("NNPACK backend control not found in this PyTorch version.")
+# --- [END OF NNPACK FIX] ---
+
 # Import MeloTTS API
 # This assumes MeloTTS is installed via 'pip install -e .' in the Dockerfile
 from melo.api import TTS #
